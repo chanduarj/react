@@ -1,0 +1,54 @@
+.datePickerwidth{
+    height: 38px;
+    border-right: 0;
+    padding: 3px 3px 3px 8px;
+    font-size:13px;
+    color:#333;
+    font-weight: 600;
+}
+.btn-group-sm>.btn, .btn-sm {
+    padding: 3px 7px;
+    font-size: 11px;
+    line-height: 1.5;
+    border-radius: 3px;
+}
+.dp-popup {
+    position:absolute !important;
+    z-index: 100000;
+    width: 272px;
+    background-color:rgba(255, 255, 255, 1);
+    background-image:none;
+}
+.input-group.date {
+  width: 102%;
+}
+
+.box{
+  width:400px;
+  height:400px;
+  border:1px solid red;
+}
+
+.box-overlay{
+  display:table;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  width:100%;
+}
+
+.box-overlay span{
+  display:table-cell;
+  vertical-align:middle;
+  text-align:center;
+  height:100%;
+  width:100%;  
+}
+.datePickerwidth + .input-group-addon {
+  background-color: transparent;
+  padding: 0;
+}
+
+.calendar-icon {
+  width: 24px;
+  cursor: pointer;
+}

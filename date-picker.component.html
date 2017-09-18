@@ -1,0 +1,12 @@
+<div (clickOutside)="onClickedOutside($event)">
+    <div class="input-group date">
+        <input type="text" [(ngModel)]="value" class="form-control input-sm datePickerwidth" (focus)="open();$event.target.select();" (blur)="onManualDateEntry()"/>
+        <span class="input-group-addon" (click)="toggle()">
+            <img [hidden]="!showDatepicker" class="calendar-icon" src="./../assets/images/settings_sel.png" alt="calender"/>
+            <img [hidden]="showDatepicker" class="calendar-icon" src="./../assets/images/settings.png" alt="calender"/>
+        </span>
+    </div>
+    <div class="dp-popup" *ngIf="showDatepicker">
+        <datepicker [(ngModel)]="dt" (selectionDone)="onSelectionDone($event)" [maxDate]="maxDate" [showWeeks]="false" [activeDate]="dt"></datepicker>
+    </div>
+</div>

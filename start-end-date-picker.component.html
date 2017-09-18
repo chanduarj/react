@@ -1,0 +1,16 @@
+
+<div class="planner-date">
+    <div class="date_field">
+        <label class="label-text" i18n>FROM DATE</label>
+        <date-picker [value]="dateValue1" (dateModelChange)="this.dateModelChange1($event)"></date-picker>
+        <span class="errorText" *ngIf="showStartError">Invalid Date</span>
+    </div>
+</div>
+<div class="planner-date">
+    <div class="date_field">
+        <label class="label-text" i18n>END DATE</label>
+        <date-picker [value]="dateValue2" (dateModelChange)="this.dateModelChange2($event)"></date-picker>
+        <span class="errorText" *ngIf="showEndError">Invalid Date</span>
+    </div>
+<span class="errorText" *ngIf="differenceError">Error: More than 18 months difference between Dates</span>    
+</div>
