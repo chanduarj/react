@@ -1,0 +1,233 @@
+<app-header *ngIf="!dropdown"></app-header>
+<div [class]="!dropdown ? 'main_container' : ''">
+    <app-navbar *ngIf="!dropdown"></app-navbar>
+    <div>
+    <div *ngIf="!dropdown" class="title-padding">
+        <span class="alt-title" i18n>Alternate Flow View</span>
+    </div>
+
+    <block-ui></block-ui>
+    <div [class]="!dropdown ? 'inner_container tab-pane' : ''">
+        <!--<div class="container-title span-block"><span class="criteria-header" i18n>Select Criteria</span></div>-->
+        <div class="container-title span-block"><span class="criteria-header" i18n>Select Criteria</span></div>
+        <p style="padding:0 0 0 2%"><span class="date-label" i18n>Service</span></p>
+        <div class="form-group formMargin">
+            <div class="form-group formMargin">
+                <div class="row form-row">
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>HIGH LEVEL SERVICE</label>
+                            <select class="flowPlanner" [(ngModel)]="hServices" (ngModelChange)="selectHservice()">
+                            <option *ngFor="let hService of serviceData" [ngValue]="hService">{{(hService.highLevelServiceCode !== 'All') ? hService.highLevelServiceCode + ' - ' : ''}}{{hService.highLevelServiceName}}</option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>LOW LEVEL SERVICE</label>
+                            <select class="flowPlanner" [(ngModel)]="selectedLowServices" (ngModelChange)="selectLowService()">
+                            <option *ngFor="let lService of lowServices" [ngValue]="lService">{{lService.lowLevelServiceName !== 'all' ? lService.lowLevelServiceName + ' - ' : ''}}{{lService.lowLevelServiceDescription}}</option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>PACKAGE TYPE</label>
+                            <select class="flowPlanner" [(ngModel)]="selectedPackage" (ngModelChange)="selectPkgType()">
+                            <option *ngFor="let pkgType of packageType" [ngValue]="pkgType">{{(pkgType !== null && pkgType !== undefined) ? pkgType.packageName : ''}}</option>
+                        </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <p class="p-margin top-border"><span class="date-label" i18n>Origin</span></p>
+            <div class="form-group formMargin">
+                <div class="row form-row">
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>ORIGIN COUNTRY</label>
+                            <select class="flowPlanner" [(ngModel)]="countries" (ngModelChange)="selectCountry()">
+                            <option *ngFor="let country of countryList" [ngValue]="country" >{{country.cnyNa}}</option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>ORIGIN REGION</label>
+                            <select class="flowPlanner" [(ngModel)]="regions" (ngModelChange)="selectRegions()">
+                        <option *ngFor="let region of selectedRegions" [ngValue]="region">{{region.regNa}}</option>
+                    </select>
+                        </div>
+                    </div>
+
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>ORIGIN DISTRICT</label>
+                            <select class="flowPlanner" [(ngModel)]="districts" (ngModelChange)="selectDistricts()">
+                            <option *ngFor="let district of selectedDistricts" [ngValue]="district">{{district.disNa}}</option>
+                        </select>
+                        </div>
+                    </div>
+
+                    <!--<div (clickOutside)="onClicked($event)">commenting temporarily until common criteria is used -->
+                        <div class="plannerSelect">
+                            <div class="form-group autoSize">
+                                <label class="flow-text" for="viewHistroyRegion" i18n>ORIGIN SLIC</label>
+                                <div class="dropdown">
+                                    <select class="drop flow-text" (click)="onSelectOriginSlic()">
+                                    <option *ngIf="resetOrgSlic === false" hidden >All</option>
+                                    <option *ngIf="resetOrgSlic === true" hidden >{{originSlicsChecked}}</option>
+                                </select>
+                                    <div class="dropdown-content" id="checkBoxTab" [hidden]="showOriginSlic">
+                                        <!--<div class="column-names">-->
+                                        <input type="checkbox" class="check-box" [(ngModel)]="originSlicAll" (change)="checkOriginSlics('all')" />
+                                        <!--(change)="checkAllSlics($event)" -->
+                                        <div class="column-value-style">All</div>
+                                        <div *ngFor="let originSlic of zipSlicList">
+                                            <label>
+                                        <input type="checkbox"   class="check-box"                 
+                                            value="{{originSlic.ogzNr}}"
+                                            [checked]="originSlic.checked"
+                                            [(ngModel)]="originSlic.checked" (change)="checkOriginSlics('one')"/>
+                                        <div class="column-value-style">{{originSlic.ogzNr}}</div>                    
+                                    </label>
+                                        </div>
+                                        <!--</div>-->
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plannerSelect">
+                            <div class="form-group autoSize">
+                                <label class="flow-text" for="viewHistroyRegion" i18n>ORIGIN SORT</label>
+                                <div class="dropdown">
+                                    <select class="drop flow-text" (click)="onSelectOriginSort()">
+                                    <div class="drop-icon"></div>
+                                     <option *ngIf="resetOrgSort === false" hidden >All</option>
+                                     <option *ngIf="resetOrgSort === true" hidden >{{originSortsChecked}}</option>
+                                </select>
+                                    <div class="dropdown-content" id="checkBoxTab" [hidden]="showSortDropdown" style="width : 110%;">
+                                        <!--<div class="column-names">-->
+                                        <input type="checkbox" class="check-box" [(ngModel)]="originSortAll" (change)="checkOriginSorts('all')" />
+                                        <!--(change)="checkAllSorts($event)"-->
+                                        <div class="column-value-style">All</div>
+                                        <div *ngFor="let originSort of originSortValues">
+                                            <label>
+                                        <input type="checkbox"   class="check-box"                 
+                                            value="{{originSort.srtTypCdDscTe}}"
+                                            [checked]="originSort.checked"
+                                            [(ngModel)]="originSort.checked" (change)="checkOriginSorts('one')"/>
+                                        <div class="column-value-style">{{originSort.srtTypCdDscTe}}</div>                    
+                                    </label>
+                                        </div>
+                                        <!--</div>-->
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <!--</div>-->
+                </div>
+            </div>
+            <p class="p-margin top-border"><span class="date-label" i18n>Via</span></p>
+            <div class="form-group formMargin">
+                <div class="row form-row">
+
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>VIA COUNTRY</label>
+                            <select class="flowPlanner" [(ngModel)]="viaCountries" (ngModelChange)="selectViaCountry()">                            
+                            <option *ngFor="let viaCountry of viaCountryList" [ngValue]="viaCountry">{{viaCountry.cnyNa}}</option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>VIA REGION</label>
+                            <select class="flowPlanner" [(ngModel)]="viaRegions" (ngModelChange)="selectViaRegions()">
+                        <option *ngFor="let viaRegion of selectedViaRegions" [ngValue]="viaRegion">{{viaRegion.regNa}}</option>
+                    </select>
+                        </div>
+                    </div>
+                    <div class="plannerSelect">
+                        <div class="form-group">
+                            <label class="flow-text" for="viewHistroyRegion" i18n>VIA DISTRICT</label>
+                            <select class="flowPlanner" [(ngModel)]="viaDistricts" (ngModelChange)="selectViaDistricts()">
+                            <option *ngFor="let viaDistrict of selectedViaDistricts" [ngValue]="viaDistrict">{{viaDistrict.disNa}}</option>
+                        </select>
+                        </div>
+                    </div>
+                    <!--<div (clickOutside)="onClickedOutside($event)">-->
+                        <div class="plannerSelect">
+                            <div class="form-group autoSize">
+                                <label class="flow-text" for="viewHistroyRegion" i18n>VIA SLIC</label>
+                                <div class="dropdown">
+                                    <select class="drop flow-text" (click)="OnSelectSlic()"><span class="drop-text">SHOW COLUMN</span>
+                                    <div class="drop-icon"></div>
+                                    <option *ngIf="resetViaSlic === false" hidden >All</option>
+                                    <option *ngIf="resetViaSlic === true" hidden >{{viaSlicsChecked}}</option>
+                                </select>
+                                    <div class="dropdown-content" id="checkBoxTab" [hidden]="showSlicDropdown">
+                                        <div class="column-names">
+                                            <input type="checkbox" class="check-box" [(ngModel)]="viaSlicAll" (change)="checkViaSlics('all')" />
+                                            <!--(change)="checkViaSlics($event)"-->
+                                            <div class="column-value-style">All</div>
+                                            <div *ngFor="let viaSlic of viaSlicList">
+                                                <label>
+                                        <input type="checkbox"  class="check-box"                  
+                                            value="{{viaSlic.ogzNr}}"
+                                            [checked]="viaSlic.checked"
+                                            [(ngModel)]="viaSlic.checked" (change)="checkViaSlics('one')"/>
+                                        <div class="column-value-style">{{viaSlic.ogzNr}}</div>                    
+                                    </label>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plannerSelect">
+                            <div class="form-group">
+                                <label class="flow-text" for="viewHistroyRegion" i18n>VIA SORT</label>
+                                <div class="dropdown">
+                                    <select class="drop flow-text" (click)="OnSelectSort()"><span class="drop-text">SHOW COLUMN</span>
+                                    <!--<div class="drop-icon"></div>-->
+                                    <option *ngIf="resetViaSort === false" hidden >All</option>
+                                    <option *ngIf="resetViaSort === true" hidden >{{viaSortsChecked}}</option>
+                                </select>
+                                    <div class="dropdown-content" id="checkBoxTab" [hidden]="showdropdownflag" style="width : 110%;">
+                                        <div class="column-names">
+                                            <input type="checkbox" class="check-box" [(ngModel)]="viaSortAll" (change)="checkViaSorts('all')" />
+                                            <!--(change)="checkAll($event)" -->
+                                            <div class="column-value-style">All</div>
+                                            <div *ngFor="let viaSort of selectedViaSorts">
+                                                <label>
+                                        <input type="checkbox" class="check-box"                
+                                            value="{{viaSort.srtTypCdDscTe}}"
+                                            [checked]="viaSort.checked"
+                                            [(ngModel)]="viaSort.checked" (change)="checkViaSorts('one')"/>
+                                        <div class="column-value-style">{{viaSort.srtTypCdDscTe}}</div>                    
+                                    </label>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <!--</div>-->
+                    <div style="width:85%; text-align:right">
+                        <div class="form-group">
+                            <input class="reset" type="button" value="Reset" (click)="reset()">
+                            <button class="planner-button" for="viewHistroyArea" (click)="applyFilters()" i18n>Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>

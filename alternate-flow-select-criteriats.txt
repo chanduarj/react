@@ -1,0 +1,624 @@
+import { Component, OnInit, Input } from '@angular/core';
+import { Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
+import { DataService } from "../service/data.service";
+import { Http, Response, Headers, RequestOptions } from "@angular/http";
+import 'rxjs/Rx';
+import { Observable } from 'rxjs/Rx';
+import { BlockUI, NgBlockUI } from 'ng-block-ui';
+import { AppConfig } from "../config/config";
+import { filterService } from "../service/filters-service.service";
+@Component({
+  selector: 'app-alternate-flow-select-criteria',
+  templateUrl: './alternate-flow-select-criteria.component.html',
+  styleUrls: ['./alternate-flow-select-criteria.component.css'],
+  providers: [DataService, AppConfig]
+})
+export class AlternateFlowSelectCriteriaComponent implements OnInit {
+  private _dataService: DataService;
+  public alternateDropdowns;
+  public originSortValues;
+  public countryList;
+  public countries;
+  public regionLabels;
+  public selectedRegions;
+  public regions;
+  public selectedDistricts;
+  public districts;
+  public originCountry;
+  public originRegion;
+  public originDistrict;
+  public viaCountryList;
+  public viaCountries;
+  public selectedViaRegions;
+  public viaCountry;
+  public selectedViaDistricts;
+  public viaRegions
+  public viaRegion
+  public viaDistrict
+  public viaDistricts
+  public originSorts;
+  public selectedViaSorts;
+  public viaSorts;
+  public zipSlicList;
+  public originZipRegion;
+  public originZipDistrict;
+  public zipList = [];
+  public originSlics;
+  public viaZipRegion;
+  public viaZipDistrict;
+  public viaSlicList;
+  public viaSlics;
+  public serviceData;
+  public showdropdownflag = true;
+  public showSlicDropdown = true;
+  public showSortDropdown = true;
+  hideDropdowns = true;
+  public showOriginSlic = true;
+  public lowServices;
+  public hServices;
+  public selectedLowServices;
+  public packageType;
+  public selectedPackage;
+  public altSearchFilter;
+  private _filterService: filterService;
+  public selectUndefinedOptionValue;
+  showcolumnName: any;
+  public originSlicAll;
+  public originSortAll;
+  public viaSlicAll;
+  public viaSortAll;
+  public resetAll;
+  public alternateAll;
+  public resetOrgSlic;
+  public resetOrgSort;
+  public resetViaSlic;
+  public resetViaSort;
+  public originSortsChecked = [];
+  public viaSortsChecked = [];
+  public viaSlicsChecked = [];
+  public originSlicsChecked = [];
+  public alternateCriteriaValues;
+  @BlockUI() blockUI: NgBlockUI;
+
+  @Input() dropdown: boolean;
+  public searchFilter = [];
+
+  @Input() public SearchCallBack: Function;
+  constructor(private _router: Router, _dataService: DataService, private config: AppConfig,
+    _filterService: filterService) {
+    this._dataService = _dataService;
+    this._filterService = _filterService;
+    this.resetAll = false;
+  }
+
+  ngOnInit() {
+
+    let savedCriteriaValues = localStorage.getItem("alternateCriteriaValues");
+  	if(savedCriteriaValues  !== undefined && savedCriteriaValues  !== "undefined") {
+  		this.alternateCriteriaValues = JSON.parse(savedCriteriaValues);
+  	}
+    this.initView()
+    if(this.dropdown === true){
+      
+      this.alternateDropdowns = [];
+      this.originSortValues = []
+      this.selectedViaSorts = []
+      this.serviceData = []
+
+      let oldFilters = this._filterService.getAlternateValues()
+      this.alternateDropdowns = oldFilters[0];
+      this.originSortValues = oldFilters[1];
+      this.selectedViaSorts = oldFilters[2];
+      this.serviceData = this.serviceData.concat(oldFilters[3]);
+
+      this.setDropdownData(this.alternateDropdowns);
+      
+       /*let savedValues = this.alternateCriteriaValues;
+      this.hServices.highLevelServiceCode = savedValues.hServices.highLevelServiceCode;  
+      this.hServices.highLevelServiceName = savedValues.hServices.highLevelServiceName; 
+  		this.countries.cnyNa = savedValues.countries.cnyNa;
+      this.viaCountries.cnyNa = savedValues.viaCountries.cnyNa;
+
+     
+      this.regions.regNa = savedValues.regions.regNa;
+      this.viaRegions.regNa = savedValues.viaRegions.regNa;
+      this.districts.disNa = savedValues.districts.disNa;
+      this.viaDistricts.disNa = savedValues.viaDistricts.disNa;
+      this.originSortAll = savedValues.originSortAll;      
+      this.originSlicAll = savedValues.originSlicAll;
+      this.viaSlicAll = savedValues.viaSlicAll;
+      this.viaSortAll = savedValues.viaSortAll;*/
+
+    }else {
+      let originSortUrl = this.config.URLS.ALT_ORIGIN_SORT
+    let altenateData = this.config.URLS.ALTERNATE_DROPDOWNS
+    let businessData = this.config.URLS.ALT_LANDING_DROPDOWNS
+    this.blockUI.start();
+    Observable.forkJoin(
+      this._dataService.httpGet(altenateData).map((res: Response) => res.json()),
+      this._dataService.httpGet(originSortUrl).map((res: Response) => res.json()),
+      this._dataService.httpGet(originSortUrl).map((res: Response) => res.json()),
+      this._dataService.httpGet(businessData).map((res: Response) => res.json())
+    ).subscribe(data => {
+      this.blockUI.stop();
+      this.alternateDropdowns = data[0];
+      this.originSortValues = data[1];
+      this.selectedViaSorts = data[2];
+      this.serviceData = this.serviceData.concat(data[3]);
+
+      this.setDropdownData(this.alternateDropdowns);
+    },
+      error => {
+        console.error("Error On Loading alternate dropdown data");
+        this.blockUI.stop();
+        return false;
+      });
+    }
+    
+  }
+  setDropdownData(dropDownsData) {
+    this.countryList = this.countryList.concat(this.alternateDropdowns.countryList);
+    this.countries = this.countryList[0];
+       this.viaCountryList = this.viaCountryList.concat(this.alternateDropdowns.countryList);
+    this.viaCountries = this.viaCountryList[0];
+    this.hServices = this.serviceData[0];
+    this.setAllLowServices();
+    this.selectLowService();
+    this._filterService.setAlternateValues(this.alternateDropdowns,this.originSortValues,
+    this.selectedViaSorts,this.serviceData)
+  }
+  
+  setAllLowServices () {
+  	this.serviceData.forEach((hs, i) => {
+    	if(i !== 0) {
+    		this.lowServices = this.lowServices.concat(hs.lowLevelServicesList);
+    	}
+    });
+  }
+  
+  public selectCountry() {
+    this.selectedRegions = this.selectedRegions.splice(0, 1);
+    this.selectedDistricts = this.selectedDistricts.splice(0, 1);
+    if (this.countries.cnyCd !== "all") {
+      this.selectedRegions = this.selectedRegions.concat(this.countries.regionList);
+      this.originCountry = this.dropDownFilter("originCountryCode", "==", this.countries.cnyCd, "STRING", "AND")
+    }
+    this.regions = this.selectedRegions[0]
+    this.districts = this.selectedDistricts[0];
+	this.zipSlicList = this.resetSelectedObjects(this.zipSlicList);
+      this.resetOrgSlic = false;
+      this.zipSlicList=[];
+  }
+
+  selectRegions() {
+    this.selectedDistricts = this.selectedDistricts.splice(0, 1);
+    if (this.regions.regNr !== "all") {
+      this.selectedDistricts = this.selectedDistricts.concat(this.regions.districtList);
+      this.originRegion = this.dropDownFilter("originRegion", "==", this.regions.regNr, "STRING", "AND")
+      this.originZipRegion = this.zipSlicFilter("regNr", this.regions.regNr)
+    }
+    this.districts = this.selectedDistricts[0];
+	this.zipSlicList = this.resetSelectedObjects(this.zipSlicList);
+      this.resetOrgSlic = false;
+      this.zipSlicList=[];
+
+  }
+  selectDistricts() {
+    if (this.districts.disNr !== "all") {
+      this.originDistrict = this.dropDownFilter("originDistrict", "==", this.districts.disNr, "STRING", "AND")
+      this.originZipDistrict = this.zipSlicFilter("disNr", this.districts.disNr)
+      this.getZipSlic()
+    }
+	this.zipSlicList = this.resetSelectedObjects(this.zipSlicList);
+      this.resetOrgSlic = false;
+      this.zipSlicList=[];
+  }
+
+  selectViaCountry() {
+    this.selectedViaRegions = this.selectedViaRegions.splice(0, 1);
+    this.selectedViaDistricts = this.selectedViaDistricts.splice(0, 1);
+    if (this.viaCountries.cnyCd !== "all") {
+      this.selectedViaRegions = this.selectedViaRegions.concat(this.viaCountries.regionList);
+      this.viaCountry = this.dropDownFilter("viaCC", "==", this.viaCountries.cnyCd, "STRING", "AND")
+    }
+    this.viaRegions = this.selectedViaRegions[0];
+    this.viaDistricts = this.selectedViaDistricts[0];
+	this.viaSlicList = this.resetSelectedObjects(this.viaSlicList);
+      this.resetViaSlic = false;
+      this.viaSlicList=[];
+
+  }
+  selectViaRegions() {
+    this.selectedViaDistricts = this.selectedViaDistricts.splice(0, 1);
+    if (this.viaRegions.regNr !== "all") {
+      this.selectedViaDistricts = this.selectedViaDistricts.concat(this.viaRegions.districtList)
+      this.viaRegion = this.dropDownFilter("viaRegionCode", "==", this.viaRegions.regNr, "STRING", "AND")
+      this.viaZipRegion = this.zipSlicFilter("regNr", this.viaRegions.regNr)
+    }
+    this.viaDistricts = this.selectedViaDistricts[0];
+	this.viaSlicList = this.resetSelectedObjects(this.viaSlicList);
+      this.resetViaSlic = false;
+      this.viaSlicList=[];
+
+  }
+  selectViaDistricts() {
+    if (this.viaDistricts.disNr !== "all") {
+      this.viaDistrict = this.dropDownFilter("viaDistrictCode", "==", this.viaDistricts.disNr, "STRING", "AND")
+      this.viaZipDistrict = this.zipSlicFilter("disNr", this.viaDistricts.disNr)
+      this.getViaSlic()
+    }
+	this.viaSlicList = this.resetSelectedObjects(this.viaSlicList);
+      this.resetViaSlic = false;
+      this.viaSlicList=[];
+  }
+  selectHservice() {
+    if (this.hServices.highLevelServiceName !== "All") {
+      this.lowServices = this.lowServices.splice(0, 1);
+      this.lowServices = this.lowServices.concat(this.hServices.lowLevelServicesList)
+    }
+    else {
+    	this.lowServices = this.lowServices.splice(0, 1);
+    	this.setAllLowServices();
+    	this.selectLowService();
+    }
+    this.selectedLowServices = this.lowServices[0]
+    this.selectedPackage = this.packageType[0];
+  }
+  selectLowService() {
+  	this.packageType = this.packageType.splice(0, 1);
+  	if(this.selectedLowServices !== undefined && this.selectedLowServices.lowLevelServiceName !== 'all') {
+  		this.packageType = this.packageType.concat(this.selectedLowServices.packaegeTypeList);
+  	}
+  	else{
+  		this.packageType = this.packageType.concat(this.lowServices[1].packaegeTypeList);
+  	}
+  	
+    this.selectedPackage = this.packageType[0];
+  }
+  selectPkgType() {
+
+  }
+  getZipSlic() {
+    let regionDistrict = [];
+    regionDistrict.push(this.originZipRegion, this.originZipDistrict)
+    let requestObject = {
+      "slicRequest": regionDistrict
+    }
+
+    let data = JSON.stringify(requestObject)
+    this.blockUI.start();
+    this._dataService.httpPost(data, this.config.URLS.ALT_ORIGIN_SLIC).subscribe(
+      data => {
+        let responseJson = data.json();
+        this.zipSlicList = responseJson.slicList;
+        this.blockUI.stop();
+      },
+      error => {
+        this.blockUI.stop();
+        return false;
+      }
+    );
+
+  }
+  getViaSlic() {
+    let regionDistrict = [];
+    regionDistrict.push(this.viaZipRegion, this.viaZipDistrict)
+    let requestObject = {
+      "slicRequest": regionDistrict
+    }
+
+    let data = JSON.stringify(requestObject)
+    this.blockUI.start();
+    this._dataService.httpPost(data, this.config.URLS.ALT_ORIGIN_SLIC).subscribe(
+      data => {
+        let responseJson = data.json();
+        this.viaSlicList = responseJson.slicList;
+        this.blockUI.stop();
+      },
+      error => {
+        this.blockUI.stop();
+        return false;
+      }
+    );
+
+  }
+  OnSelectSort() {
+    this.showSlicDropdown = true;
+    this.showOriginSlic = true;
+    this.showdropdownflag = !this.showdropdownflag;
+
+  }
+  OnSelectSlic() {
+    this.showdropdownflag = true;
+    this.showOriginSlic = true;
+    this.showSlicDropdown = !this.showSlicDropdown;
+
+  }
+  onSelectOriginSort() {
+    this.showdropdownflag = true;
+    this.showSlicDropdown = true;
+    this.showOriginSlic = true;
+    this.showSortDropdown = !this.showSortDropdown
+  }
+  onSelectOriginSlic() {
+    this.showdropdownflag = true;
+    this.showSlicDropdown = true;
+    this.showSortDropdown = true;
+    this.showOriginSlic = !this.showOriginSlic;
+
+  }
+  checkOriginSlics(flag) {
+    let checkedSlics = []
+    if (flag === "all") {
+      this.zipSlicList = this.checkAll(this.zipSlicList, this.originSlicAll)
+      this.resetOrgSlic = false;
+    }
+    else if (flag === "one") {
+      checkedSlics = this.zipSlicList.filter((item) => item.checked === true);
+      this.originSlicAll = (checkedSlics.length === this.zipSlicList.length) ? true : false;
+      this.originSlicsChecked = [];
+      this.originSlicsChecked = this.displayCheckedItems(checkedSlics,'ogzNr')
+      this.resetOrgSlic = (checkedSlics.length === 0) ? false : true;
+    }
+
+  }
+  checkAll(selectedList, flag) {
+    selectedList.forEach(columnvalue => {
+      columnvalue.checked = flag;
+    })
+    return selectedList;
+  }
+  checkViaSlics(flag) {
+    let checkedSlics = []
+    if (flag === "all") {
+      this.viaSlicList = this.checkAll(this.viaSlicList, this.viaSlicAll)
+      this.resetViaSlic = false;
+    }
+    else if (flag === "one") {
+      checkedSlics = this.viaSlicList.filter((item) => item.checked === true);
+      this.viaSlicAll = (checkedSlics.length === this.viaSlicList.length) ? true : false;
+      this.viaSlicsChecked = [];
+      this.viaSlicsChecked = this.displayCheckedItems(checkedSlics,'ogzNr') 
+      this.resetViaSlic = (checkedSlics.length === 0) ? false : true;
+    }
+  }
+  checkViaSorts(flag) {
+    let checkedSorts = []
+    if (flag === "all") {
+      this.selectedViaSorts = this.checkAll(this.selectedViaSorts, this.viaSortAll)
+      this.resetViaSort = false;
+    }
+    else if (flag === "one") {
+      checkedSorts = this.selectedViaSorts.filter((item) => item.checked === true);
+      this.viaSortAll = (checkedSorts.length === this.selectedViaSorts.length) ? true : false;
+      this.viaSortsChecked = [];
+      this.viaSortsChecked = this.displayCheckedItems(checkedSorts,'srtTypCdDscTe') 
+      this.resetViaSort = (checkedSorts.length === 0) ? false : true;
+    }
+  }
+  onClickedOutside(event) {
+    this.showdropdownflag = true;
+    this.showSlicDropdown = true;
+
+  }
+  checkOriginSorts(flag) {
+    let checkedSorts = []
+    if (flag === "all") {
+      this.originSortValues = this.checkAll(this.originSortValues, this.originSortAll)
+      this.resetOrgSort = false;
+    }
+    else if (flag === "one") {
+      checkedSorts = this.originSortValues.filter((item) => item.checked === true);
+      this.originSortAll = (checkedSorts.length === this.originSortValues.length) ? true : false;
+      this.originSortsChecked = [];
+      this.originSortsChecked = this.displayCheckedItems(checkedSorts,'srtTypCdDscTe') 
+      this.resetOrgSort = (checkedSorts.length === 0) ? false : true;
+      
+    }
+
+  }
+  displayCheckedItems(checkedItems,keyValye){
+    let retList = []
+    for (let i of checkedItems) {
+            if (i.checked == true) {
+                 retList.push(i[keyValye])
+            }
+        }
+    return retList;
+  }
+  
+  onClicked(event) {
+    this.showSortDropdown = true;
+    this.showOriginSlic = true;
+  }
+
+  public getSelectedObjects(selectedArray, objectString, objectkey) {
+    let selectedList = []
+    let count = 0;
+    if (selectedArray !== undefined) {
+      for (let i of selectedArray) {
+        if (i.checked == true) {
+          if (count == 0) {
+            selectedList.push(this.dropDownFilter(objectString, "==", i[objectkey], "STRING", "AND"));
+          } else {
+            selectedList.push(this.dropDownFilter(objectString, "==", i[objectkey], "STRING", "OR"));
+          }
+          count++;
+        }
+      }
+      return selectedList;
+    }
+  }
+
+ getCriteriaValues (): any {
+  	return {
+  			"hServices" : this.hServices,
+  			"countries" : this.countries,
+        "regions" : this.regions,
+        "districts" : this.districts,
+        "originSlicAll" : this.originSlicAll,
+        "originSortAll": this.originSortAll,
+        "viaCountries" : this.viaCountries,
+        "viaRegions" : this.viaRegions,
+        "viaDistricts" : this.viaDistricts,
+        "viaSlicAll" : this.viaSlicAll,
+        "viaSortAll" : this.viaSortAll
+  	}
+  }
+
+  public applyFilters() {
+    localStorage.setItem('filterValue', JSON.stringify(this.searchCriteria()));
+    localStorage.setItem('alternateCriteriaValues', JSON.stringify(this.getCriteriaValues()));
+    let altFilters = JSON.stringify(this.searchCriteria())
+    if (!this.dropdown) {
+      this._router.navigateByUrl('/flow/viewAlternateFlowPlan');
+    }
+    else {
+      this.SearchCallBack(this.altSearchFilter);
+    }
+  }
+
+  public searchCriteria() { /*Creates request object*/
+    let mySearch = []
+    let originSortObj;
+    let originSLicObj;
+    let viaSortObj;
+    let viaSlicObj;
+    if(this.resetOrgSort === false){
+       originSortObj = ""
+    }
+    else{
+       originSortObj = this.getSelectedObjects(this.originSortValues, "originSort", 'srtTypMnmTe') 
+    }
+    if(this.resetOrgSlic === false){
+      originSLicObj = ""
+    }else{
+      originSLicObj = this.getSelectedObjects(this.zipSlicList, "originSLIC", "ogzNr")
+    }
+    if(this.resetViaSort === false){
+      viaSortObj = ""
+    }else{
+      viaSortObj = this.getSelectedObjects(this.selectedViaSorts, "viaSort", 'srtTypMnmTe')
+    }
+    if(this.resetViaSlic === false){
+      viaSlicObj = ""
+    }else{
+      viaSlicObj = this.getSelectedObjects(this.viaSlicList, "viaSlic", "ogzNr")
+    }
+    
+    mySearch.push(this.originCountry, this.originRegion, this.originDistrict, this.viaCountry, this.viaRegion, this.viaDistrict, originSortObj
+      , originSLicObj, viaSortObj, viaSlicObj)
+
+    this.altSearchFilter = [];
+    let multipleSelect = [];
+    for (let i = 0; i < mySearch.length; i++) {
+      if (mySearch[i] !== undefined && mySearch[i].name !== "" && mySearch[i].length !== 0) {
+        if (mySearch[i].length >= 1) {
+          multipleSelect = mySearch[i].filter((item) => item.type === "STRING");
+          this.altSearchFilter = this.altSearchFilter.concat(multipleSelect)
+        }
+        else {
+          this.altSearchFilter.push(mySearch[i])
+        }
+      }
+    }
+    let requestObj = {
+      "historicalDataRequest": {
+        "filters": this.altSearchFilter,
+        "sorts": [],
+        "page": {
+          "size": 500,
+          "page": 0
+        }
+      }
+    }
+    return requestObj;
+  }
+
+  public dropDownFilter(name, criteria, value, type, condition) {
+    let stringObj = {}
+    stringObj["name"] = name;
+    stringObj["criteria"] = criteria;
+    stringObj["value"] = value;
+    stringObj["type"] = type;
+    stringObj["condition"] = condition;
+    return stringObj;
+  }
+  public zipSlicFilter(name, value) {
+    let zipObj = {}
+    zipObj["name"] = name;
+    zipObj["value"] = value;
+    return zipObj;
+  }
+   resetSelectedObjects(selectedList){
+     if(selectedList !== undefined && selectedList.length > 0){
+        for (let i of selectedList) {
+       if (i.checked == true) {
+         i.checked = false;
+       }
+    }
+    return selectedList;
+     }  
+  }
+  public initView() {
+    this.countryList = [{ 'cnyCd': 'all', 'cnyNa': 'All' }];
+    this.viaCountryList = [{ 'cnyCd': 'all', 'cnyNa': 'All' }];
+    this.selectedRegions = [{ 'regNa': 'All', 'regNr': 'all' }];
+    this.selectedViaRegions = [{ 'regNa': 'All', 'regNr': 'all' }];
+    this.selectedDistricts = [{ 'disNr': "all", 'disNa': "All" }];
+    this.selectedViaDistricts = [{ 'disNr': "all", 'disNa': "All" }];
+    this.serviceData = [{ 'highLevelServiceCode': "All", 'highLevelServiceName': "All" }];
+    this.packageType = [{ 'packageName': "All" }];
+    this.lowServices = [{ 'lowLevelServiceDescription': "All", 'lowLevelServiceName': "all" }]
+    this.countries = this.countryList[0];
+    this.regions = this.selectedRegions[0];
+    this.districts = this.selectedDistricts[0];
+    this.viaCountries = this.viaCountryList[0];
+    this.viaRegions = this.selectedViaRegions[0];
+    this.viaDistricts = this.selectedViaDistricts[0];
+    this.hServices = this.serviceData[0];
+    this.selectedLowServices = this.lowServices[0]
+    this.selectedPackage = this.packageType[0];
+    this.originSlicAll = false;
+    this.originSortAll = false;
+    this.viaSlicAll = false;
+    this.viaSortAll = false;
+    this.resetOrgSlic = false;
+    this.resetOrgSort = false;
+    this.resetViaSlic = false;
+    this.resetViaSort = false;
+   
+  }
+  public reset() {
+    this.resetAll = true;
+    this.resetOrgSlic = false;
+    this.resetOrgSort = false;
+    this.resetViaSlic = false;
+    this.resetViaSort = false;
+    this.countries = this.countryList[0]
+    this.regions = this.selectedRegions[0]
+    this.districts = this.selectedDistricts[0]
+    this.viaCountries = this.viaCountryList[0];
+    this.viaRegions = this.selectedViaRegions[0];
+    this.viaDistricts = this.selectedViaDistricts[0];
+    this.hServices = this.serviceData[0];
+    this.selectedLowServices = this.lowServices[0]
+    this.selectedPackage = this.packageType[0];
+    this.originSortValues = this.resetSelectedObjects(this.originSortValues)
+    this.originSortAll = false
+    this.zipSlicList = this.resetSelectedObjects(this.zipSlicList)
+    this.originSlicAll = false;
+    this.selectedViaSorts = this.resetSelectedObjects(this.selectedViaSorts)
+    this.viaSortAll = false;
+    this.viaSlicList = this.resetSelectedObjects(this.viaSlicList)
+    this.viaSlicAll = false;
+     this.originCountry = "";
+     this.originRegion = "" ;
+     this.originDistrict = "" ;
+     this.viaCountry = "";
+     this.viaRegion = "";
+     this.viaDistrict = "";
+  }
+ 
+}
